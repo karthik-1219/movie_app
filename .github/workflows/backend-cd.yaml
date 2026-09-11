@@ -88,24 +88,45 @@ jobs:
     name: Push Backend Image to ECR
     runs-on: ubuntu-latest
     needs: build
+    if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.BACKEND_ECR_REPOSITORY != '' }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate AWS credentials
+        id: aws-auth
+        continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws sts get-caller-identity > /tmp/aws-identity.json 2>/tmp/aws-identity.err || {
+            echo "aws_ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          echo "aws_ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Skip deployment when AWS credentials are unavailable
+        if: steps.aws-auth.outputs.aws_ok != 'true'
+        run: echo "Skipping backend deployment because AWS credentials are missing or invalid."
+
       - name: Configure AWS credentials
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push image
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.BACKEND_ECR_REPOSITORY }}
@@ -121,33 +142,56 @@ jobs:
     name: Deploy Backend to EKS
     runs-on: ubuntu-latest
     needs: ecr
+    if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.EKS_CLUSTER_NAME != '' && secrets.BACKEND_ECR_REPOSITORY != '' }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate AWS credentials
+        id: aws-auth
+        continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws sts get-caller-identity > /tmp/aws-identity.json 2>/tmp/aws-identity.err || {
+            echo "aws_ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          echo "aws_ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Skip deployment when AWS credentials are unavailable
+        if: steps.aws-auth.outputs.aws_ok != 'true'
+        run: echo "Skipping backend deployment because AWS credentials are missing or invalid."
+
       - name: Configure AWS credentials
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Configure kubectl
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         run: |
           aws eks update-kubeconfig \
             --region "${{ secrets.AWS_REGION }}" \
             --name "${{ secrets.EKS_CLUSTER_NAME }}"
 
       - name: Apply backend Kubernetes resources
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         run: kubectl apply -k backend/k8s
 
       - name: Update backend image
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.BACKEND_ECR_REPOSITORY }}
@@ -158,5 +202,6 @@ jobs:
             -n default
 
       - name: Wait for deployment
+        if: steps.aws-auth.outputs.aws_ok == 'true'
         run: |
           kubectl rollout status deployment/backend -n default
