@@ -35,3 +35,23 @@ repository secrets required by the CD workflows before running them:
 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, EKS_CLUSTER_NAME,
 FRONTEND_ECR_REPOSITORY, BACKEND_ECR_REPOSITORY, and
 REACT_APP_MOVIE_API_URL.
+
+Required workflow files included in the repository:
+- .github/workflows/frontend-ci.yaml
+- .github/workflows/backend-ci.yaml
+- .github/workflows/frontend-cd.yaml
+- .github/workflows/backend-cd.yaml
+
+Verification notes:
+- Frontend CI workflow: lint + test + docker build on pull_request to main
+- Backend CI workflow: lint + test + docker build on pull_request to main
+- Frontend CD workflow: lint + test + docker build + ECR push + EKS deploy on push to main
+- Backend CD workflow: lint + test + docker build + ECR push + EKS deploy on push to main
+
+Required screenshots / evidence:
+- Frontend app running with the movie list loaded
+- Backend API returning the movie list from /movies
+- GitHub Actions run links or screenshots showing each workflow ran successfully
+
+Note:
+Update the placeholder URLs above with the live public GitHub repo and deployed application URLs before final submission.
