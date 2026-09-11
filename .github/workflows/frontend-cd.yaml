@@ -134,6 +134,9 @@ jobs:
             --region "${{ secrets.AWS_REGION }}" \
             --name "${{ secrets.EKS_CLUSTER_NAME }}"
 
+      - name: Apply frontend Kubernetes resources
+        run: kubectl apply -k frontend/k8s
+
       - name: Update frontend image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}

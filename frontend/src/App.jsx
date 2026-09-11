@@ -4,9 +4,10 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const movieApiUrl = import.meta.env.VITE_MOVIE_API_URL || "/api/movies";
 
   useEffect(() => {
-    fetch("/api/movies")
+    fetch(movieApiUrl)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error: ${response.status}`);
@@ -25,7 +26,7 @@ function App() {
         );
         setLoading(false);
       });
-  }, []);
+  }, [movieApiUrl]);
 
   return (
     <div className="app">

@@ -8,6 +8,9 @@ RUN npm install
 
 COPY . .
 
+ARG REACT_APP_MOVIE_API_URL
+ENV VITE_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL
+
 RUN npm run build
 
 

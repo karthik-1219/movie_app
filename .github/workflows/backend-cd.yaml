@@ -138,6 +138,9 @@ jobs:
             --region "${{ secrets.AWS_REGION }}" \
             --name "${{ secrets.EKS_CLUSTER_NAME }}"
 
+      - name: Apply backend Kubernetes resources
+        run: kubectl apply -k backend/k8s
+
       - name: Update backend image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}

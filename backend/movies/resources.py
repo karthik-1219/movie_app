@@ -26,7 +26,7 @@ class Movies(MethodView):
             return jsonify(
                 {
                     "movies": [
-                        dict({"title": movie["title"]}, **{"id": i})
+                        dict(movie, id=i)
                         for i, movie in movies.items()
                     ]
                 }
