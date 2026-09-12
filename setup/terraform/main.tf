@@ -325,3 +325,9 @@ data "aws_iam_policy_document" "github_policy" {
     resources = ["*"]
   }
 }
+
+resource "aws_iam_user_policy" "github_action_user" {
+  name   = "github-action-deployment-policy"
+  user   = aws_iam_user.github_action_user.name
+  policy = data.aws_iam_policy_document.github_policy.json
+}
