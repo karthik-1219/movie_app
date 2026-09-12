@@ -312,8 +312,8 @@ resource "aws_iam_role_policy_attachment" "codebuild" {
 ####################
 # Github Action role
 ####################
-resource "aws_iam_user" "github_action_user" {
-  name = "github-action-user"
+data "aws_iam_user" "github_action_user" {
+  user_name = "github-action-user"
 }
 
 
@@ -328,6 +328,6 @@ data "aws_iam_policy_document" "github_policy" {
 
 resource "aws_iam_user_policy" "github_action_user" {
   name   = "github-action-deployment-policy"
-  user   = aws_iam_user.github_action_user.name
+  user   = data.aws_iam_user.github_action_user.user_name
   policy = data.aws_iam_policy_document.github_policy.json
 }
