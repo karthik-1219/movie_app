@@ -1,27 +1,18 @@
-from . import app
-import os
+from backend import app
 
 
 def test_movies_endpoint_returns_200():
-    with app.test_client() as client:
-        status_code = os.getenv("FAIL_TEST", 200)
-        response = client.get("/movies/")
-        assert response.status_code == status_code
+    response = app.test_client().get("/movies")
+    assert response.status_code == 200
 
 
 def test_movies_endpoint_returns_json():
-    with app.test_client() as client:
-        response = client.get("/movies/")
-        assert response.content_type == "application/json"
+    response = app.test_client().get("/movies")
+    assert response.is_json
+    assert "movies" in response.get_json()
 
 
 def test_movies_endpoint_returns_valid_data():
-    with app.test_client() as client:
-        response = client.get("/movies/")
-        data = response.get_json()
-        assert isinstance(data, dict)
-        assert "movies" in data
-        assert isinstance(data.get("movies"), list)
-        assert len(data["movies"]) > 0
-        assert "title" in data["movies"][0]
-        assert "description" in data["movies"][0]
+    movies = app.test_client().get("/movies").get_json()["movies"]
+    assert len(movies) == 3
+    assert movies[0]["title"] == "Top Gun: Maverick"

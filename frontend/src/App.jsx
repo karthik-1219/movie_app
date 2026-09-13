@@ -1,71 +1,45 @@
 import { useEffect, useState } from "react";
 
-function App() {
+const API_URL = import.meta.env.VITE_MOVIE_API_URL || "http://localhost:5000";
+
+export default function App() {
   const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const movieApiUrl = import.meta.env.VITE_MOVIE_API_URL || "/api/movies";
+  const [status, setStatus] = useState("Loading movies...");
 
   useEffect(() => {
-    fetch(movieApiUrl)
+    fetch(`${API_URL}/movies`)
       .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error("Movie service unavailable");
         return response.json();
       })
-      .then((data) => {
-        setMovies(data.movies || []);
-        setLoading(false);
+      .then(({ movies: loadedMovies }) => {
+        setMovies(loadedMovies);
+        setStatus(`${loadedMovies.length} films in the collection`);
       })
-      .catch((err) => {
-        console.error(err);
-        setError(
-          "Unable to connect to the backend. Make sure the Flask server is running."
-        );
-        setLoading(false);
-      });
-  }, [movieApiUrl]);
+      .catch(() => setStatus("Unable to load movies. Please try again later."));
+  }, []);
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>Movie App</h1>
-        <p>Discover movies</p>
+    <main className="app-shell">
+      <header className="hero">
+        <p className="eyebrow">MOVIE PICTURE / COLLECTION 01</p>
+        <h1>Stories worth<br /><em>staying for.</em></h1>
+        <p className="intro">A small, carefully selected catalog of movies for the moments when you want something memorable.</p>
       </header>
-
-      <main className="container">
-        <h2>Movies</h2>
-
-        {loading && <p className="message">Loading movies...</p>}
-
-        {error && <p className="error">{error}</p>}
-
-        {!loading && !error && movies.length === 0 && (
-          <p className="message">No movies found.</p>
-        )}
-
+      <section className="catalog" aria-labelledby="catalog-heading">
+        <div className="section-heading">
+          <h2 id="catalog-heading">Now showing</h2>
+          <span>{status}</span>
+        </div>
         <div className="movie-grid">
           {movies.map((movie, index) => (
-            <article className="movie-card" key={movie.id || index}>
-              <div className="movie-content">
-                <h3>{movie.title}</h3>
-
-                {movie.year && <p>Year: {movie.year}</p>}
-
-                {movie.genre && <p>Genre: {movie.genre}</p>}
-
-                {movie.description && (
-                  <p className="description">{movie.description}</p>
-                )}
-              </div>
+            <article className="movie-card" key={movie.id}>
+              <div className={`poster poster-${index + 1}`}><span>{String(index + 1).padStart(2, "0")}</span></div>
+              <div className="movie-details"><h3>{movie.title}</h3><p>Feature film</p></div>
             </article>
           ))}
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
-
-export default App;

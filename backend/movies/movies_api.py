@@ -1,26 +1,15 @@
-from flask import Blueprint
+from flask import Blueprint, jsonify
 
-from .resources import Movies
+from .resources import MOVIES
 
-movies_api = Blueprint("movies_api", __name__)
-movies = Movies.as_view("movies")
+movies_api = Blueprint("movies", __name__)
 
-movies_api.add_url_rule(
-    "/movies",
-    strict_slashes=False,
-    defaults={"movie_id": None},
-    view_func=movies,
-    methods=["GET"],
-)
 
-movies_api.add_url_rule(
-    "/movies",
-    view_func=movies,
-    methods=["POST"],
-)
+@movies_api.get("/movies")
+def get_movies():
+    return jsonify({"movies": MOVIES})
 
-movies_api.add_url_rule(
-    "/movies/<int:movie_id>",
-    view_func=movies,
-    methods=["GET", "PUT", "DELETE"],
-)
+
+@movies_api.get("/health")
+def health():
+    return jsonify({"status": "ok"})
